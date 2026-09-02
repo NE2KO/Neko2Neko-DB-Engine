@@ -1,0 +1,38 @@
+{
+  "name": "@homelab/db-engine",
+  "version": "0.1.0",
+  "description": "Standalone persistence engine boundary. Owns connection, schema, statements, transactions, health, WAL, backup. Application expresses intent only.",
+  "type": "module",
+  "private": true,
+  "main": "src/index.js",
+  "exports": {
+    ".": {
+      "import": "./src/index.js",
+      "default": "./src/index.js"
+    },
+    "./internal": {
+      "import": "./src/index.js",
+      "default": "./src/index.js"
+    },
+    "./schema": {
+      "import": "./src/schema.js",
+      "default": "./src/schema.js"
+    },
+    "./statements": {
+      "import": "./src/statements.js",
+      "default": "./src/statements.js"
+    },
+    "./connection": {
+      "import": "./src/connection.js",
+      "default": "./src/connection.js"
+    }
+  },
+  "scripts": {
+    "test": "node --test 'tests/*.test.js'"
+  },
+  "dependencies": {
+    "better-sqlite3": "^12.9.0"
+  },
+  "keywords": ["db", "sqlite", "persistence", "boundary"],
+  "license": "UNLICENSED"
+}
