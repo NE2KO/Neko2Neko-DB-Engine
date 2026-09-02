@@ -608,6 +608,31 @@ export function applyCoreSchema(conn) {
 
     // FTS must exist before the statement registry compiles FTS-touching statements.
     conn.exec(FTS_SCHEMA_SQL);
+
+    // One-time migration: if files_fts exists as a standalone FTS5 table
+    // (no content='files'), migrate to external-content so the 'delete' command
+    // in triggers works. Idempotent: no-op if already external-content.
+    migrateFtsToExternalContent(conn);
+}
+
+function migrateFtsToExternalContent(conn) {
+    try {
+        const ddlRow = conn.prepare(
+            "SELECT sql FROM sqlite_master WHERE type='table' AND name='files_fts'"
+        ).get();
+        if (!ddlRow || !ddlRow.sql) return;
+        if (ddlRow.sql.includes("content='files'")) return; // already external-content
+
+        // Standalone FTS5 detected. Rebuild as external-content backed by files.
+        // The data is derived from files.name, so we can safely drop and rebuild.
+        conn.exec(`
+            DROP TABLE files_fts;
+            CREATE VIRTUAL TABLE files_fts USING fts5(name, content='files', tokenize='unicode61 remove_diacritics 1');
+            INSERT INTO files_fts(files_fts) VALUES('rebuild');
+        `);
+    } catch {
+        // Best-effort: if migration fails, trigger errors on UPDATE will surface.
+    }
 }
 
 export function seedDefaults(conn) {
